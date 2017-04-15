@@ -128,19 +128,19 @@ object Lab6 extends jsy.util.JsyApplication with Lab6Like {
     */
   def test(re: RegExpr, chars: List[Char])(sc: List[Char] => Boolean): Boolean = (re, chars) match {
     /* Basic Operators */
-    case (RNoString, _) => ???
-    case (REmptyString, _) => ???
-    case (RSingle(_), Nil) => ???
-    case (RSingle(c1), c2 :: t) => ???
-    case (RConcat(re1, re2), _) => ???
-    case (RUnion(re1, re2), _) => ???
-    case (RStar(re1), _) => ???
+    case (RNoString, _) => false
+    case (REmptyString, _) => chars.toString() == ""
+    case (RSingle(_), Nil) => false
+    case (RSingle(c1), c2 :: t) => if (c1 == c2) sc(t) else false
+    case (RConcat(re1, re2), _) => test(re1, chars)({ nextChars => test(re2, nextChars)(sc)})
+    case (RUnion(re1, re2), _) => test(re1, chars)(sc) || test(re2, chars)(sc)
+    case (RStar(re1), _) => sc(chars) || test(re1, chars)({ nextChars => test(RStar(re1), nextChars)(sc)})
 
     /* Extended Operators */
     case (RAnyChar, Nil) => false
-    case (RAnyChar, _ :: t) => ???
-    case (RPlus(re1), _) => ???
-    case (ROption(re1), _) => ???
+    case (RAnyChar, _ :: t) => sc(t)
+    case (RPlus(re1), _) => test(RConcat(re1, RStar(re1)), chars)(sc)
+    case (ROption(re1), _) => test(RUnion(re1, REmptyString), chars)(sc)
 
     /***** Extra Credit Cases *****/
     case (RIntersect(re1, re2), _) => ???
