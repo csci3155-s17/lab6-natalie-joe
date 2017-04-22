@@ -33,15 +33,37 @@ object Lab6 extends jsy.util.JsyApplication with Lab6Like {
    * is a Scala expression that throws the exception scala.NotImplementedError.
    */
 
+  /*
+
+  def foldLeft[A](t: Tree)(z: A)(f: (A, Int) => A): A = {
+    def loop(acc: A, t: Tree): A = t match {
+      case Empty => acc
+      case Node(l, d, r) => loop( f(loop(acc, l), d), r )
+    }
+    loop(z, t)
+  }
+
+  */
+
+
   /*** Exercises with Continuations ***/
 
   def foldLeftAndThen[A,B](t: Tree)(z: A)(f: (A,Int) => A)(sc: A => B): B = {
-    def loop(acc: A, t: Tree)(sc: A => B): B = ???
+    def loop(acc: A, t: Tree)(sc: A => B): B = t match {
+      case Empty => sc(acc)
+      case Node(l, d, r) => loop(f(acc, d), r)({next => loop(next, l)(sc)})
+    }
     loop(z, t)(sc)
   }
 
   def dfs[A](t: Tree)(f: Int => Boolean)(sc: List[Int] => A)(fc: () => A): A = {
-    def loop(path: List[Int], t: Tree)(fc: () => A): A = ???
+    def loop(path: List[Int], t: Tree)(fc: () => A): A = t match {
+        case Node(l, d, r) => f(d) match {
+          case true => sc( d::path )
+          case false => loop(d::path, r)({ () => loop(d::path, l)(fc)})
+        }
+        case Empty => fc()
+      }
     loop(Nil, t)(fc)
   }
 
@@ -209,7 +231,7 @@ object Lab6 extends jsy.util.JsyApplication with Lab6Like {
 
     // RStar(r) => RUnion(REmptyString, RConcat(r, RStar(r)))
     //either empty string or concat first part of r
-    case (RStar(re1), _) => sc(chars) || test(re1, chars)({ nextChars => test(RStar(re1), nextChars)(sc)})
+    case (RStar(re1), _) => sc(chars) || test(re1, chars)({ nextChars => if(nextChars.size >= chars.size) false else test(RStar(re1), nextChars)(sc)})
 
     /* Extended Operators */
     case (RAnyChar, Nil) => false
